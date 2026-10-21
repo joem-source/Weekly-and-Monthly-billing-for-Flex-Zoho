@@ -8,18 +8,21 @@
   :root {
     --bg: #f5f6f8; --card: #ffffff; --text: #1d2330; --muted: #667085;
     --line: #d9dde5; --accent: #1f5fbf; --accent-text: #ffffff; --zero: #a15c00;
+    --zero-bg: #fff4e0; --head-bg: #eef1f6;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #14171c; --card: #1d2128; --text: #e7eaf0; --muted: #98a2b3;
       --line: #333944; --accent: #4d8ef0; --accent-text: #0b1220; --zero: #f0b45a;
+      --zero-bg: #2e2516; --head-bg: #252a33;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
   .sub { color: var(--muted); margin: 0 0 20px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
@@ -27,29 +30,31 @@
   .hint { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
   input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
     background: var(--bg); color: var(--text); font: inherit; }
-  .seg { display: flex; gap: 0; }
+  .seg { display: flex; }
   .seg button { flex: 1; padding: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
     font: inherit; cursor: pointer; }
   .seg button:first-child { border-radius: 6px 0 0 6px; }
   .seg button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
   .seg button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
   .btn { padding: 9px 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent);
     color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
   .btn.ghost { background: transparent; color: var(--accent); }
   .msg { color: var(--muted); font-size: 13px; }
-  .err { color: #d43c3c; font-size: 13px; }
-  textarea { width: 100%; min-height: 220px; padding: 10px; border: 1px solid var(--line); border-radius: 6px;
+  .err { color: #d43c3c; font-size: 13px; margin-top: 10px; }
+  .note { margin-top: 12px; padding: 8px 12px; border-left: 3px solid var(--zero); background: var(--zero-bg);
+    font-size: 13px; border-radius: 0 6px 6px 0; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: center; white-space: nowrap; }
+  th { background: var(--head-bg); font-weight: 600; }
+  td.amt, th.amt { text-align: right; }
+  tr.hiatus td { background: var(--zero-bg); color: var(--zero); }
+  tr.total td { font-weight: 700; background: var(--head-bg); }
+  .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  textarea { width: 100%; min-height: 200px; padding: 10px; border: 1px solid var(--line); border-radius: 6px;
     background: var(--bg); color: var(--text); font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
-  .summary { display: flex; gap: 22px; flex-wrap: wrap; margin: 6px 0 12px; font-size: 14px; }
-  .summary b { font-variant-numeric: tabular-nums; }
-  ul.lines { list-style: none; padding: 0; margin: 12px 0 0; }
-  ul.lines li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line);
-    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; }
-  ul.lines li span { flex: 1; overflow-wrap: anywhere; }
-  ul.lines li.zero span { color: var(--zero); }
-  ul.lines li button { padding: 4px 10px; font-size: 12px; border-radius: 5px; border: 1px solid var(--line);
-    background: transparent; color: var(--text); cursor: pointer; }
+  .empty { color: var(--muted); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -61,7 +66,7 @@
     <div class="grid">
       <div>
         <label for="contract">Contract #</label>
-        <input id="contract" placeholder="080715">
+        <input id="contract" placeholder="083208">
       </div>
       <div>
         <label>Billing cycle</label>
@@ -75,12 +80,12 @@
         <input id="start" type="date">
       </div>
       <div>
-        <label for="end">Use end date <span class="hint">Optional — sets the count if # of periods is blank</span></label>
+        <label for="end">Use end date <span class="hint">Optional — sets the count if billing weeks is blank</span></label>
         <input id="end" type="date">
       </div>
       <div>
         <label for="amount">Amount</label>
-        <input id="amount" inputmode="decimal" placeholder="909.50">
+        <input id="amount" inputmode="decimal" placeholder="75.00">
       </div>
       <div>
         <label for="amountMode">Amount is…</label>
@@ -94,37 +99,41 @@
         <input id="periods" type="number" min="1" step="1">
       </div>
       <div>
-        <label for="zeros">$0 invoices <span class="hint">Invoice #s to bill $0, e.g. 12, 13</span></label>
-        <input id="zeros" placeholder="12, 13">
+        <label for="zeros">Hiatus weeks ($0) <span class="hint">Invoice #s billed at $0, e.g. 10, 11</span></label>
+        <input id="zeros" placeholder="10, 11">
       </div>
       <div>
-        <label for="firstInvoice">First invoice date <span class="hint">Optional — defaults to use start date</span></label>
+        <label for="firstInvoice">First invoice date <span class="hint">Fills in from use start date — change if needed</span></label>
         <input id="firstInvoice" type="date">
       </div>
       <div>
         <label for="dueDays">Due (days after invoice)</label>
         <input id="dueDays" type="number" min="0" step="1" value="30">
       </div>
-      <div>
-        <label for="startNum">Starting invoice #</label>
-        <input id="startNum" type="number" min="1" step="1" value="1">
-      </div>
     </div>
+    <div class="note"><b>Note:</b> $0 invoices are <b>hiatus weeks</b> — the gear stays out but the client isn't billed that week. They keep their invoice number so the count stays in order.</div>
     <div class="actions">
-      <button class="btn" id="go" type="button">Generate lines</button>
       <button class="btn ghost" id="clear" type="button">Clear</button>
-      <span class="err" id="err"></span>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cheat sheet</h2>
+    <div class="tablewrap" id="sheet"><p class="empty">Fill in contract #, start date, amount, and billing weeks (or an end date) to see the schedule.</p></div>
+    <div class="actions" id="sheetActions" hidden>
+      <button class="btn ghost" id="copySheet" type="button">Copy table for Google Sheets</button>
+      <span class="msg" id="sheetCopied"></span>
     </div>
   </div>
 
   <div class="card" id="results" hidden>
-    <div class="summary" id="summary"></div>
+    <h2>Lines for Flex</h2>
     <textarea id="out" readonly></textarea>
     <div class="actions">
       <button class="btn" id="copyAll" type="button">Copy all lines</button>
       <span class="msg" id="copied"></span>
     </div>
-    <ul class="lines" id="lines"></ul>
   </div>
 </main>
 
@@ -143,43 +152,43 @@ function addMonths(d, n) {
   x.setDate(Math.min(day, last));
   return x;
 }
-function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
 function fmtShort(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
 function fmtFull(d) { return (d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0') + '/' + d.getFullYear(); }
-function fmtMoney(c) {
-  if (c === 0) return '$0';
+function fmtSheet(d) { return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear(); }
+function fmtMoney(c, zeroPlain) {
+  if (c === 0 && zeroPlain) return '$0';
   return '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // ---------- core calculation ----------
-function buildLines(o) {
+function buildRows(o) {
   const start = o.start, end = o.end, monthly = o.cycle === 'Monthly';
   const periodStart = i => monthly ? addMonths(start, i) : addDays(start, 7 * i);
 
   let count = o.periods;
   if (!count) {
-    if (!end) throw new Error('Enter either the number of billing periods or a use end date.');
+    if (!end) return null;
     if (end < start) throw new Error('Use end date is before the start date.');
     count = 0;
     while (periodStart(count) <= end) count++;
   }
+  if (count > 520) throw new Error('That is more than 520 billing periods — check the dates.');
 
   const zeroSet = new Set(o.zeros);
-  const numbers = Array.from({ length: count }, (_, i) => o.startNum + i);
-  const billable = numbers.filter(n => !zeroSet.has(n)).length;
-  if (billable === 0) throw new Error('Every invoice is marked $0.');
+  const numbers = Array.from({ length: count }, (_, i) => i + 1);
+  const billableNums = numbers.filter(n => !zeroSet.has(n));
+  if (billableNums.length === 0) throw new Error('Every invoice is marked as a hiatus week.');
 
-  // amounts in cents
   const amtCents = Math.round(o.amount * 100);
   let perCents = amtCents, remainder = 0;
   if (o.mode === 'total') {
-    perCents = Math.floor(amtCents / billable);
-    remainder = amtCents - perCents * billable; // extra cents go on the last billable invoice
+    perCents = Math.floor(amtCents / billableNums.length);
+    remainder = amtCents - perCents * billableNums.length; // leftover cents go on the last billable invoice
   }
-  const lastBillable = numbers.filter(n => !zeroSet.has(n)).pop();
+  const lastBillable = billableNums[billableNums.length - 1];
 
   const invoiceBase = o.firstInvoice || start;
-  const lines = [];
+  const rows = [];
   let total = 0;
   for (let i = 0; i < count; i++) {
     const n = numbers[i];
@@ -188,73 +197,110 @@ function buildLines(o) {
     if (end && pEnd > end) pEnd = end;
     const inv = monthly ? addMonths(invoiceBase, i) : addDays(invoiceBase, 7 * i);
     const due = addDays(inv, o.dueDays);
-    let cents = zeroSet.has(n) ? 0 : perCents + (n === lastBillable ? remainder : 0);
+    const hiatus = zeroSet.has(n);
+    const cents = hiatus ? 0 : perCents + (n === lastBillable ? remainder : 0);
     total += cents;
-    const text = `(${o.contract}) ${o.cycle} Invoice #${n} (${fmtShort(pStart)}-${fmtShort(pEnd)}): (${fmtMoney(cents)}) on ${fmtFull(inv)}, due ${fmtFull(due)}`;
-    lines.push({ text, zero: cents === 0 });
+    rows.push({
+      n, pStart, pEnd, inv, due, cents, hiatus,
+      line: `(${o.contract}) ${o.cycle} Invoice #${n} (${fmtShort(pStart)}-${fmtShort(pEnd)}): (${fmtMoney(cents, true)}) on ${fmtFull(inv)}, due ${fmtFull(due)}`
+    });
   }
-  return { lines, total, count, billable };
+  return { rows, total, count, billable: billableNums.length };
 }
 
 // ---------- UI ----------
 if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
   let cycle = 'Weekly';
+  let firstInvoiceTouched = false;
+  let lastRes = null;
 
   $('cycle').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     cycle = b.dataset.v;
     [...$('cycle').children].forEach(x => x.classList.toggle('on', x === b));
-    $('periodsLabel').textContent = cycle === 'Weekly' ? 'Billing weeks' : 'Billing months';
+    const unit = cycle === 'Weekly' ? 'weeks' : 'months';
+    $('periodsLabel').textContent = 'Billing ' + unit;
+    render();
   });
 
-  function copy(text, note) {
-    navigator.clipboard.writeText(text).then(() => {
-      $('copied').textContent = note; setTimeout(() => $('copied').textContent = '', 1800);
-    }, () => { $('out').select(); document.execCommand('copy'); });
+  // First invoice date follows the use start date until you change it yourself
+  $('start').addEventListener('input', () => {
+    if (!firstInvoiceTouched || !$('firstInvoice').value) {
+      $('firstInvoice').value = $('start').value;
+      firstInvoiceTouched = false;
+    }
+  });
+  $('firstInvoice').addEventListener('input', () => { firstInvoiceTouched = !!$('firstInvoice').value; });
+
+  document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', render));
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  function render() {
+    $('err').textContent = '';
+    const contract = $('contract').value.trim();
+    const start = parseDate($('start').value);
+    const amount = parseFloat($('amount').value.replace(/[$,]/g, ''));
+    let res = null;
+    try {
+      if (contract && start && !isNaN(amount)) {
+        res = buildRows({
+          contract, cycle, start, amount,
+          end: parseDate($('end').value),
+          mode: $('amountMode').value,
+          periods: parseInt($('periods').value, 10) || 0,
+          zeros: $('zeros').value.split(/[,\s]+/).map(Number).filter(n => n > 0),
+          firstInvoice: parseDate($('firstInvoice').value),
+          dueDays: parseInt($('dueDays').value, 10) || 0,
+        });
+      }
+    } catch (e) { $('err').textContent = e.message; res = null; }
+    lastRes = res;
+
+    if (!res) {
+      $('sheet').innerHTML = '<p class="empty">Fill in contract #, start date, amount, and billing ' +
+        (cycle === 'Weekly' ? 'weeks' : 'months') + ' (or an end date) to see the schedule.</p>';
+      $('sheetActions').hidden = true;
+      $('results').hidden = true;
+      return;
+    }
+
+    const label = cycle + ' Invoice';
+    let h = '<table><thead><tr><th>Contract #</th><th>' + label + '</th><th>#</th><th>Use Start Date</th><th></th><th>Use End Date</th><th class="amt">Amount</th><th>Invoice Date</th><th>Due Date</th><th></th></tr></thead><tbody>';
+    res.rows.forEach(r => {
+      h += `<tr${r.hiatus ? ' class="hiatus"' : ''}><td>${esc(contract)}</td><td>${label}</td><td>${r.n}</td><td>${fmtSheet(r.pStart)}</td><td>-</td><td>${fmtSheet(r.pEnd)}</td><td class="amt">${fmtMoney(r.cents)}</td><td>${fmtSheet(r.inv)}</td><td>${fmtSheet(r.due)}</td><td>${r.hiatus ? '<span class="tag">Hiatus</span>' : ''}</td></tr>`;
+    });
+    h += `<tr class="total"><td>TOTAL</td><td colspan="5" style="text-align:left;font-weight:400">${res.count} invoices · ${res.billable} billable · ${res.count - res.billable} hiatus</td><td class="amt">${fmtMoney(res.total)}</td><td colspan="3"></td></tr>`;
+    h += '</tbody></table>';
+    $('sheet').innerHTML = h;
+    $('sheetActions').hidden = false;
+
+    $('out').value = res.rows.map(r => r.line).join('\n');
+    $('results').hidden = false;
   }
 
-  $('go').addEventListener('click', () => {
-    $('err').textContent = '';
-    try {
-      const contract = $('contract').value.trim();
-      const start = parseDate($('start').value);
-      const amount = parseFloat($('amount').value.replace(/[$,]/g, ''));
-      if (!contract) throw new Error('Enter a contract #.');
-      if (!start) throw new Error('Enter a use start date.');
-      if (isNaN(amount)) throw new Error('Enter an amount.');
-      const res = buildLines({
-        contract, cycle, start, amount,
-        end: parseDate($('end').value),
-        mode: $('amountMode').value,
-        periods: parseInt($('periods').value, 10) || 0,
-        zeros: $('zeros').value.split(/[,\s]+/).map(Number).filter(n => n > 0),
-        firstInvoice: parseDate($('firstInvoice').value),
-        dueDays: parseInt($('dueDays').value, 10) || 0,
-        startNum: parseInt($('startNum').value, 10) || 1,
-      });
-      $('out').value = res.lines.map(l => l.text).join('\n');
-      $('summary').innerHTML =
-        `<span>Invoices: <b>${res.count}</b></span><span>Billable: <b>${res.billable}</b></span><span>Total billed: <b>${fmtMoney(res.total)}</b></span>`;
-      const ul = $('lines'); ul.innerHTML = '';
-      res.lines.forEach(l => {
-        const li = document.createElement('li'); if (l.zero) li.className = 'zero';
-        const s = document.createElement('span'); s.textContent = l.text;
-        const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Copy';
-        b.onclick = () => { navigator.clipboard.writeText(l.text); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200); };
-        li.append(s, b); ul.append(li);
-      });
-      $('results').hidden = false;
-    } catch (e) { $('err').textContent = e.message; $('results').hidden = true; }
+  function flash(id, msg) { $(id).textContent = msg; setTimeout(() => $(id).textContent = '', 1800); }
+  function copyText(text, id, msg) {
+    navigator.clipboard.writeText(text).then(() => flash(id, msg), () => flash(id, 'Copy failed — select and copy by hand'));
+  }
+
+  $('copyAll').addEventListener('click', () => copyText($('out').value, 'copied', 'Copied all lines'));
+  $('copySheet').addEventListener('click', () => {
+    if (!lastRes) return;
+    const c = $('contract').value.trim(), label = cycle + ' Invoice';
+    const lines = [['Contract #', label, '#', 'Use Start Date', '-', 'Use End Date', 'Amount', 'Invoice Date', 'Due Date', 'Note'].join('\t')];
+    lastRes.rows.forEach(r => lines.push([c, label, r.n, fmtSheet(r.pStart), '-', fmtSheet(r.pEnd), fmtMoney(r.cents), fmtSheet(r.inv), fmtSheet(r.due), r.hiatus ? 'Hiatus' : ''].join('\t')));
+    lines.push(['TOTAL', '', '', '', '', '', fmtMoney(lastRes.total), '', '', ''].join('\t'));
+    copyText(lines.join('\n'), 'sheetCopied', 'Copied — paste into a sheet');
   });
 
-  $('copyAll').addEventListener('click', () => copy($('out').value, 'Copied all lines'));
   $('clear').addEventListener('click', () => {
-    ['contract','start','end','amount','periods','zeros','firstInvoice'].forEach(id => $(id).value = '');
-    $('dueDays').value = 30; $('startNum').value = 1; $('results').hidden = true; $('err').textContent = '';
+    ['contract', 'start', 'end', 'amount', 'periods', 'zeros', 'firstInvoice'].forEach(id => $(id).value = '');
+    $('dueDays').value = 30; firstInvoiceTouched = false; render();
   });
 }
-if (typeof module !== 'undefined') module.exports = { buildLines, parseDate };
+if (typeof module !== 'undefined') module.exports = { buildRows, parseDate };
 </script>
 </body>
 </html>
