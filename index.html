@@ -55,6 +55,13 @@
   textarea { width: 100%; min-height: 200px; padding: 10px; border: 1px solid var(--line); border-radius: 6px;
     background: var(--bg); color: var(--text); font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
   .empty { color: var(--muted); font-size: 14px; }
+  ul.lines { list-style: none; padding: 0; margin: 14px 0 0; }
+  ul.lines li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line);
+    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; }
+  ul.lines li span { flex: 1; overflow-wrap: anywhere; }
+  ul.lines li.zero span { color: var(--zero); }
+  ul.lines li button { padding: 4px 10px; font-size: 12px; border-radius: 5px; border: 1px solid var(--line);
+    background: transparent; color: var(--text); cursor: pointer; }
 </style>
 </head>
 <body>
@@ -134,6 +141,7 @@
       <button class="btn" id="copyAll" type="button">Copy all lines</button>
       <span class="msg" id="copied"></span>
     </div>
+    <ul class="lines" id="lines"></ul>
   </div>
 </main>
 
@@ -277,6 +285,16 @@ if (typeof document !== 'undefined') {
     $('sheetActions').hidden = false;
 
     $('out').value = res.rows.map(r => r.line).join('\n');
+    const ul = $('lines'); ul.innerHTML = '';
+    res.rows.forEach(r => {
+      const li = document.createElement('li'); if (r.hiatus) li.className = 'zero';
+      const s = document.createElement('span'); s.textContent = r.line;
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Copy';
+      b.onclick = () => navigator.clipboard.writeText(r.line).then(() => {
+        b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200);
+      });
+      li.append(s, b); ul.append(li);
+    });
     $('results').hidden = false;
   }
 
