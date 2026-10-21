@@ -87,10 +87,6 @@
         <input id="start" type="date">
       </div>
       <div>
-        <label for="end">Use end date <span class="hint">Optional — sets the count if billing weeks is blank</span></label>
-        <input id="end" type="date">
-      </div>
-      <div>
         <label for="amount">Amount</label>
         <input id="amount" inputmode="decimal" placeholder="75.00">
       </div>
@@ -102,7 +98,7 @@
         </select>
       </div>
       <div>
-        <label for="periods"><span id="periodsLabel">Billing weeks</span> <span class="hint">Leave blank to figure from end date</span></label>
+        <label for="periods"><span id="periodsLabel">Billing weeks</span> <span class="hint">How many invoices, including hiatus weeks</span></label>
         <input id="periods" type="number" min="1" step="1">
       </div>
       <div>
@@ -170,16 +166,11 @@ function fmtMoney(c, zeroPlain) {
 
 // ---------- core calculation ----------
 function buildRows(o) {
-  const start = o.start, end = o.end, monthly = o.cycle === 'Monthly';
+  const start = o.start, monthly = o.cycle === 'Monthly';
   const periodStart = i => monthly ? addMonths(start, i) : addDays(start, 7 * i);
 
-  let count = o.periods;
-  if (!count) {
-    if (!end) return null;
-    if (end < start) throw new Error('Use end date is before the start date.');
-    count = 0;
-    while (periodStart(count) <= end) count++;
-  }
+  const count = o.periods;
+  if (!count) return null;
   if (count > 520) throw new Error('That is more than 520 billing periods — check the dates.');
 
   const zeroSet = new Set(o.zeros);
@@ -201,8 +192,7 @@ function buildRows(o) {
   for (let i = 0; i < count; i++) {
     const n = numbers[i];
     const pStart = periodStart(i);
-    let pEnd = addDays(periodStart(i + 1), -1);
-    if (end && pEnd > end) pEnd = end;
+    const pEnd = addDays(periodStart(i + 1), -1);
     const inv = monthly ? addMonths(invoiceBase, i) : addDays(invoiceBase, 7 * i);
     const due = addDays(inv, o.dueDays);
     const hiatus = zeroSet.has(n);
@@ -255,7 +245,6 @@ if (typeof document !== 'undefined') {
       if (contract && start && !isNaN(amount)) {
         res = buildRows({
           contract, cycle, start, amount,
-          end: parseDate($('end').value),
           mode: $('amountMode').value,
           periods: parseInt($('periods').value, 10) || 0,
           zeros: $('zeros').value.split(/[,\s]+/).map(Number).filter(n => n > 0),
@@ -268,14 +257,16 @@ if (typeof document !== 'undefined') {
 
     if (!res) {
       $('sheet').innerHTML = '<p class="empty">Fill in contract #, start date, amount, and billing ' +
-        (cycle === 'Weekly' ? 'weeks' : 'months') + ' (or an end date) to see the schedule.</p>';
+        (cycle === 'Weekly' ? 'weeks' : 'months') + ' to see the schedule.</p>';
       $('sheetActions').hidden = true;
       $('results').hidden = true;
       return;
     }
 
     const label = cycle + ' Invoice';
-    let h = '<table><thead><tr><th>Contract #</th><th>' + label + '</th><th>#</th><th>Use Start Date</th><th></th><th>Use End Date</th><th class="amt">Amount</th><th>Invoice Date</th><th>Due Date</th><th></th></tr></thead><tbody>';
+    const unit = cycle === 'Weekly' ? 'Week' : 'Month';
+    let h = `<p class="msg" style="margin:0 0 10px">Billing runs <b>${fmtSheet(res.rows[0].pStart)}</b> through <b>${fmtSheet(res.rows[res.rows.length - 1].pEnd)}</b></p>`;
+    h += '<table><thead><tr><th>Contract #</th><th>' + label + '</th><th>#</th><th>' + unit + ' Start</th><th></th><th>' + unit + ' End</th><th class="amt">Amount</th><th>Invoice Date</th><th>Due Date</th><th></th></tr></thead><tbody>';
     res.rows.forEach(r => {
       h += `<tr${r.hiatus ? ' class="hiatus"' : ''}><td>${esc(contract)}</td><td>${label}</td><td>${r.n}</td><td>${fmtSheet(r.pStart)}</td><td>-</td><td>${fmtSheet(r.pEnd)}</td><td class="amt">${fmtMoney(r.cents)}</td><td>${fmtSheet(r.inv)}</td><td>${fmtSheet(r.due)}</td><td>${r.hiatus ? '<span class="tag">Hiatus</span>' : ''}</td></tr>`;
     });
@@ -307,14 +298,15 @@ if (typeof document !== 'undefined') {
   $('copySheet').addEventListener('click', () => {
     if (!lastRes) return;
     const c = $('contract').value.trim(), label = cycle + ' Invoice';
-    const lines = [['Contract #', label, '#', 'Use Start Date', '-', 'Use End Date', 'Amount', 'Invoice Date', 'Due Date', 'Note'].join('\t')];
+    const unit = cycle === 'Weekly' ? 'Week' : 'Month';
+    const lines = [['Contract #', label, '#', unit + ' Start', '-', unit + ' End', 'Amount', 'Invoice Date', 'Due Date', 'Note'].join('\t')];
     lastRes.rows.forEach(r => lines.push([c, label, r.n, fmtSheet(r.pStart), '-', fmtSheet(r.pEnd), fmtMoney(r.cents), fmtSheet(r.inv), fmtSheet(r.due), r.hiatus ? 'Hiatus' : ''].join('\t')));
     lines.push(['TOTAL', '', '', '', '', '', fmtMoney(lastRes.total), '', '', ''].join('\t'));
     copyText(lines.join('\n'), 'sheetCopied', 'Copied — paste into a sheet');
   });
 
   $('clear').addEventListener('click', () => {
-    ['contract', 'start', 'end', 'amount', 'periods', 'zeros', 'firstInvoice'].forEach(id => $(id).value = '');
+    ['contract', 'start', 'amount', 'periods', 'zeros', 'firstInvoice'].forEach(id => $(id).value = '');
     $('dueDays').value = 30; firstInvoiceTouched = false; render();
   });
 }
